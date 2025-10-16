@@ -3,12 +3,12 @@ import { Heart, CheckCircle, XCircle } from 'lucide-react';
 import PatientSearch from './components/PatientSearch';
 import PatientForm from './components/PatientForm';
 import PatientSheet from './components/PatientSheet';
-import { Patient, searchPatient, createPatient } from './services/api';
+import { PatientFormData, PatientWithHistory, searchPatient, createPatient } from './services/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [patientFound, setPatientFound] = useState<boolean | null>(null);
-  const [currentPatient, setCurrentPatient] = useState<Patient | null>(null);
+  const [currentPatient, setCurrentPatient] = useState<PatientWithHistory | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   const handleSearch = async (numeroIdentificacion: string) => {
@@ -19,30 +19,13 @@ function App() {
 
     try {
       const result = await searchPatient(numeroIdentificacion);
-      setPatientFound(result.found);
 
-      if (result.found) {
-        setCurrentPatient(result.patient);
-        setMessage({ type: 'success', text: '¡Paciente encontrado! Información cargada automáticamente.' });
+      if (result) {
+        setPatientFound(true);
+        setCurrentPatient(result);
+        setMessage({ type: 'success', text: '¡Paciente encontrado! Historial médico completo cargado automáticamente.' });
       } else {
-        setCurrentPatient({
-          numeroIdentificacion,
-          nombres: '',
-          apellidos: '',
-          fechaNacimiento: '',
-          genero: 'Masculino',
-          telefono: '',
-          email: '',
-          direccion: '',
-          tipoSangre: 'O+',
-          alergias: '',
-          condicionesMedicas: '',
-          contactoEmergencia: {
-            nombre: '',
-            telefono: '',
-            relacion: '',
-          },
-        });
+        setPatientFound(false);
         setMessage({ type: 'error', text: 'Paciente no encontrado. Complete el formulario para registrarlo.' });
       }
     } catch (error) {
@@ -53,7 +36,7 @@ function App() {
     }
   };
 
-  const handleSubmit = async (patientData: Patient) => {
+  const handleSubmit = async (patientData: PatientFormData) => {
     setIsLoading(true);
     setMessage(null);
 
@@ -67,6 +50,19 @@ function App() {
       console.error(error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleRefreshPatient = async () => {
+    if (currentPatient) {
+      try {
+        const refreshedPatient = await searchPatient(currentPatient.numero_identificacion);
+        if (refreshedPatient) {
+          setCurrentPatient(refreshedPatient);
+        }
+      } catch (error) {
+        console.error('Error al actualizar paciente:', error);
+      }
     }
   };
 
@@ -118,17 +114,19 @@ function App() {
             </div>
           )}
 
-          {currentPatient && (
+          {currentPatient && patientFound && (
             <div className="mt-12">
-              {patientFound ? (
-                <PatientSheet patient={currentPatient} />
-              ) : (
-                <PatientForm
-                  existingPatient={null}
-                  onSubmit={handleSubmit}
-                  isLoading={isLoading}
-                />
-              )}
+              <PatientSheet patient={currentPatient} onRefresh={handleRefreshPatient} />
+            </div>
+          )}
+
+          {patientFound === false && (
+            <div className="mt-12">
+              <PatientForm
+                existingPatient={null}
+                onSubmit={handleSubmit}
+                isLoading={isLoading}
+              />
             </div>
           )}
         </div>

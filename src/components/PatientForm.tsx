@@ -1,31 +1,29 @@
 import { useState, useEffect } from 'react';
-import { Patient } from '../services/api';
+import { PatientFormData } from '../services/api';
 import { User, Calendar, Phone, Mail, MapPin, Heart, AlertCircle, Users } from 'lucide-react';
 
 interface PatientFormProps {
-  existingPatient?: Patient | null;
-  onSubmit: (patientData: Patient) => void;
+  existingPatient?: PatientFormData | null;
+  onSubmit: (patientData: PatientFormData) => void;
   isLoading: boolean;
 }
 
 export default function PatientForm({ existingPatient, onSubmit, isLoading }: PatientFormProps) {
-  const [formData, setFormData] = useState<Patient>({
-    numeroIdentificacion: '',
+  const [formData, setFormData] = useState<PatientFormData>({
+    numero_identificacion: '',
     nombres: '',
     apellidos: '',
-    fechaNacimiento: '',
+    fecha_nacimiento: '',
     genero: 'Masculino',
     telefono: '',
     email: '',
     direccion: '',
-    tipoSangre: 'O+',
+    tipo_sangre: 'O+',
     alergias: '',
-    condicionesMedicas: '',
-    contactoEmergencia: {
-      nombre: '',
-      telefono: '',
-      relacion: '',
-    },
+    condiciones_medicas: '',
+    contacto_emergencia_nombre: '',
+    contacto_emergencia_telefono: '',
+    contacto_emergencia_relacion: '',
   });
 
   useEffect(() => {
@@ -38,21 +36,10 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
   ) => {
     const { name, value } = e.target;
-    if (name.startsWith('contactoEmergencia.')) {
-      const field = name.split('.')[1];
-      setFormData((prev) => ({
-        ...prev,
-        contactoEmergencia: {
-          ...prev.contactoEmergencia,
-          [field]: value,
-        },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -82,8 +69,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
             </label>
             <input
               type="text"
-              name="numeroIdentificacion"
-              value={formData.numeroIdentificacion}
+              name="numero_identificacion"
+              value={formData.numero_identificacion}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
@@ -130,8 +117,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
             </label>
             <input
               type="date"
-              name="fechaNacimiento"
-              value={formData.fechaNacimiento}
+              name="fecha_nacimiento"
+              value={formData.fecha_nacimiento}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
@@ -163,8 +150,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
               Tipo de Sangre *
             </label>
             <select
-              name="tipoSangre"
-              value={formData.tipoSangre}
+              name="tipo_sangre"
+              value={formData.tipo_sangre}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
               required
@@ -251,8 +238,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
             Condiciones Médicas
           </label>
           <textarea
-            name="condicionesMedicas"
-            value={formData.condicionesMedicas}
+            name="condiciones_medicas"
+            value={formData.condiciones_medicas}
             onChange={handleChange}
             rows={3}
             className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
@@ -274,8 +261,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
               </label>
               <input
                 type="text"
-                name="contactoEmergencia.nombre"
-                value={formData.contactoEmergencia.nombre}
+                name="contacto_emergencia_nombre"
+                value={formData.contacto_emergencia_nombre}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
@@ -289,8 +276,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
               </label>
               <input
                 type="tel"
-                name="contactoEmergencia.telefono"
-                value={formData.contactoEmergencia.telefono}
+                name="contacto_emergencia_telefono"
+                value={formData.contacto_emergencia_telefono}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 required
@@ -304,8 +291,8 @@ export default function PatientForm({ existingPatient, onSubmit, isLoading }: Pa
               </label>
               <input
                 type="text"
-                name="contactoEmergencia.relacion"
-                value={formData.contactoEmergencia.relacion}
+                name="contacto_emergencia_relacion"
+                value={formData.contacto_emergencia_relacion}
                 onChange={handleChange}
                 className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 placeholder="Ej: Madre, Padre, Esposo/a"
