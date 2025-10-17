@@ -2,6 +2,7 @@ import { User, Phone, Heart, Users, FileText } from 'lucide-react';
 import { PatientWithHistory } from '../services/api';
 import MedicalHistory from './MedicalHistory';
 import ImageUpload from './ImageUpload';
+import { WorkflowPanel } from './WorkflowPanel';
 
 interface PatientSheetProps {
   patient: PatientWithHistory;
@@ -136,12 +137,16 @@ export default function PatientSheet({ patient, onRefresh }: PatientSheetProps) 
         </div>
 
         <div className="border-b-2 border-slate-200 pb-6">
+          <WorkflowPanel patient={patient} onStateChange={onRefresh} />
+        </div>
+
+        <div className="border-b-2 border-slate-200 pb-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-bold text-slate-800 flex items-center gap-2">
               <FileText size={20} className="text-blue-600" />
               HISTORIAL MÉDICO COMPLETO
             </h3>
-            <ImageUpload patientId={patient._id} onSuccess={onRefresh} />
+            <ImageUpload patientId={patient.id} onSuccess={onRefresh} />
           </div>
           <MedicalHistory
             exams={patient.exams}
