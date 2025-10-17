@@ -1,4 +1,4 @@
-import { supabase, Patient, MedicalExam, Diagnosis, Treatment, MedicalImage } from '../lib/supabase';
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export interface PatientFormData {
   numero_identificacion: string;
@@ -17,6 +17,61 @@ export interface PatientFormData {
   contacto_emergencia_relacion: string;
 }
 
+export interface Patient extends PatientFormData {
+  _id: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface MedicalExam {
+  _id: string;
+  patient_id: string;
+  tipo_examen: string;
+  fecha: string;
+  descripcion: string;
+  resultados: string;
+  doctor: string;
+  createdAt: string;
+}
+
+export interface Diagnosis {
+  _id: string;
+  patient_id: string;
+  fecha: string;
+  diagnostico: string;
+  cie10_code?: string;
+  doctor: string;
+  notas: string;
+  createdAt: string;
+}
+
+export interface Treatment {
+  _id: string;
+  patient_id: string;
+  fecha_inicio: string;
+  fecha_fin?: string;
+  tipo: string;
+  descripcion: string;
+  medicamento?: string;
+  dosis?: string;
+  frecuencia?: string;
+  doctor: string;
+  activo: boolean;
+  createdAt: string;
+}
+
+export interface MedicalImage {
+  _id: string;
+  patient_id: string;
+  exam_id?: string;
+  tipo: string;
+  fecha: string;
+  descripcion: string;
+  url: string;
+  nombre_archivo: string;
+  createdAt: string;
+}
+
 export interface PatientWithHistory extends Patient {
   exams?: MedicalExam[];
   diagnoses?: Diagnosis[];
@@ -25,105 +80,101 @@ export interface PatientWithHistory extends Patient {
 }
 
 export const searchPatient = async (numeroIdentificacion: string): Promise<PatientWithHistory | null> => {
-  const { data: patient, error } = await supabase
-    .from('patients')
-    .select('*')
-    .eq('numero_identificacion', numeroIdentificacion)
-    .maybeSingle();
+  const response = await fetch(`${API_URL}/api/patients/search/${numeroIdentificacion}`);
 
-  if (error) {
+  if (!response.ok) {
+    if (response.status === 404) {
+      return null;
+    }
     throw new Error('Error al buscar paciente');
   }
 
-  if (!patient) {
-    return null;
-  }
-
-  const [examsResult, diagnosesResult, treatmentsResult, imagesResult] = await Promise.all([
-    supabase.from('medical_exams').select('*').eq('patient_id', patient.id).order('fecha', { ascending: false }),
-    supabase.from('diagnoses').select('*').eq('patient_id', patient.id).order('fecha', { ascending: false }),
-    supabase.from('treatments').select('*').eq('patient_id', patient.id).order('fecha_inicio', { ascending: false }),
-    supabase.from('medical_images').select('*').eq('patient_id', patient.id).order('fecha', { ascending: false })
-  ]);
-
-  return {
-    ...patient,
-    exams: examsResult.data || [],
-    diagnoses: diagnosesResult.data || [],
-    treatments: treatmentsResult.data || [],
-    images: imagesResult.data || []
-  };
+  return response.json();
 };
 
 export const createPatient = async (patientData: PatientFormData): Promise<Patient> => {
-  const { data, error } = await supabase
-    .from('patients')
-    .insert([patientData])
-    .select()
-    .single();
+  const response = await fetch(`${API_URL}/api/patients`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(patientData),
+  });
 
-  if (error) {
-    throw new Error('Error al crear paciente: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al crear paciente');
   }
 
-  return data;
+  return response.json();
 };
 
 export const updatePatient = async (id: string, patientData: Partial<PatientFormData>): Promise<Patient> => {
-  const { data, error } = await supabase
-    .from('patients')
-    .update({ ...patientData, updated_at: new Date().toISOString() })
-    .eq('id', id)
-    .select()
-    .single();
+  const response = await fetch(`${API_URL}/api/patients/${id}`, {
+    method: 'PUT',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(patientData),
+  });
 
-  if (error) {
-    throw new Error('Error al actualizar paciente: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al actualizar paciente');
   }
 
-  return data;
+  return response.json();
 };
 
-export const addMedicalExam = async (examData: Omit<MedicalExam, 'id' | 'created_at'>): Promise<MedicalExam> => {
-  const { data, error } = await supabase
-    .from('medical_exams')
-    .insert([examData])
-    .select()
-    .single();
+export const addMedicalExam = async (examData: Omit<MedicalExam, '_id' | 'createdAt'>): Promise<MedicalExam> => {
+  const response = await fetch(`${API_URL}/api/patients/${examData.patient_id}/exams`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(examData),
+  });
 
-  if (error) {
-    throw new Error('Error al agregar examen: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al agregar examen');
   }
 
-  return data;
+  return response.json();
 };
 
-export const addDiagnosis = async (diagnosisData: Omit<Diagnosis, 'id' | 'created_at'>): Promise<Diagnosis> => {
-  const { data, error } = await supabase
-    .from('diagnoses')
-    .insert([diagnosisData])
-    .select()
-    .single();
+export const addDiagnosis = async (diagnosisData: Omit<Diagnosis, '_id' | 'createdAt'>): Promise<Diagnosis> => {
+  const response = await fetch(`${API_URL}/api/patients/${diagnosisData.patient_id}/diagnoses`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(diagnosisData),
+  });
 
-  if (error) {
-    throw new Error('Error al agregar diagnóstico: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al agregar diagnóstico');
   }
 
-  return data;
+  return response.json();
 };
 
-export const addTreatment = async (treatmentData: Omit<Treatment, 'id' | 'created_at'>): Promise<Treatment> => {
-  const { data, error } = await supabase
-    .from('treatments')
-    .insert([treatmentData])
-    .select()
-    .single();
+export const addTreatment = async (treatmentData: Omit<Treatment, '_id' | 'createdAt'>): Promise<Treatment> => {
+  const response = await fetch(`${API_URL}/api/patients/${treatmentData.patient_id}/treatments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(treatmentData),
+  });
 
-  if (error) {
-    throw new Error('Error al agregar tratamiento: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al agregar tratamiento');
   }
 
-  return data;
+  return response.json();
 };
 
 export const uploadMedicalImage = async (
@@ -136,55 +187,35 @@ export const uploadMedicalImage = async (
     exam_id?: string;
   }
 ): Promise<MedicalImage> => {
-  const fileExt = file.name.split('.').pop();
-  const fileName = `${patientId}/${Date.now()}.${fileExt}`;
-
-  const { error: uploadError } = await supabase.storage
-    .from('medical-images')
-    .upload(fileName, file);
-
-  if (uploadError) {
-    throw new Error('Error al subir imagen: ' + uploadError.message);
+  const formData = new FormData();
+  formData.append('image', file);
+  formData.append('tipo', metadata.tipo);
+  formData.append('fecha', metadata.fecha);
+  formData.append('descripcion', metadata.descripcion);
+  if (metadata.exam_id) {
+    formData.append('exam_id', metadata.exam_id);
   }
 
-  const { data: { publicUrl } } = supabase.storage
-    .from('medical-images')
-    .getPublicUrl(fileName);
+  const response = await fetch(`${API_URL}/api/patients/${patientId}/images`, {
+    method: 'POST',
+    body: formData,
+  });
 
-  const { data, error } = await supabase
-    .from('medical_images')
-    .insert([{
-      patient_id: patientId,
-      exam_id: metadata.exam_id || null,
-      tipo: metadata.tipo,
-      fecha: metadata.fecha,
-      descripcion: metadata.descripcion,
-      url: publicUrl,
-      nombre_archivo: file.name
-    }])
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error('Error al guardar información de imagen: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al subir imagen');
   }
 
-  return data;
+  return response.json();
 };
 
-export const deleteMedicalImage = async (imageId: string, imageUrl: string): Promise<void> => {
-  const pathParts = imageUrl.split('/medical-images/');
-  if (pathParts.length > 1) {
-    const filePath = pathParts[1];
-    await supabase.storage.from('medical-images').remove([filePath]);
-  }
+export const deleteMedicalImage = async (imageId: string): Promise<void> => {
+  const response = await fetch(`${API_URL}/api/images/${imageId}`, {
+    method: 'DELETE',
+  });
 
-  const { error } = await supabase
-    .from('medical_images')
-    .delete()
-    .eq('id', imageId);
-
-  if (error) {
-    throw new Error('Error al eliminar imagen: ' + error.message);
+  if (!response.ok) {
+    const error = await response.json();
+    throw new Error(error.message || 'Error al eliminar imagen');
   }
 };

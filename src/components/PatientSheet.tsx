@@ -141,7 +141,7 @@ export default function PatientSheet({ patient, onRefresh }: PatientSheetProps) 
               <FileText size={20} className="text-blue-600" />
               HISTORIAL MÉDICO COMPLETO
             </h3>
-            <ImageUpload patientId={patient.id} onSuccess={onRefresh} />
+            <ImageUpload patientId={patient._id} onSuccess={onRefresh} />
           </div>
           <MedicalHistory
             exams={patient.exams}
