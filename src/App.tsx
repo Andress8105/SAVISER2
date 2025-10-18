@@ -3,7 +3,8 @@ import { Heart, CheckCircle, XCircle } from 'lucide-react';
 import PatientSearch from './components/PatientSearch';
 import PatientForm from './components/PatientForm';
 import PatientSheet from './components/PatientSheet';
-import { PatientFormData, PatientWithHistory, searchPatient, createPatient } from './services/api';
+import type { PatientFormData, PatientWithHistory } from './services/api';
+import { searchPatient, createPatient } from './services/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);

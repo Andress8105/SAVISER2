@@ -27,7 +27,7 @@ export default function MedicalHistory({ exams = [], diagnoses = [], treatments 
           </div>
           <div className="space-y-3">
             {exams.map((exam) => (
-              <div key={exam.id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div key={exam._id} className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <span className="inline-block px-2 py-1 text-xs font-semibold text-blue-700 bg-blue-100 rounded-full mb-2">
@@ -63,7 +63,7 @@ export default function MedicalHistory({ exams = [], diagnoses = [], treatments 
           </div>
           <div className="space-y-3">
             {diagnoses.map((diagnosis) => (
-              <div key={diagnosis.id} className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div key={diagnosis._id} className="bg-red-50 border border-red-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <p className="text-sm font-medium text-gray-900">{diagnosis.diagnostico}</p>
@@ -101,7 +101,7 @@ export default function MedicalHistory({ exams = [], diagnoses = [], treatments 
           </div>
           <div className="space-y-3">
             {treatments.map((treatment) => (
-              <div key={treatment.id} className="bg-green-50 border border-green-200 rounded-lg p-4">
+              <div key={treatment._id} className="bg-green-50 border border-green-200 rounded-lg p-4">
                 <div className="flex items-start justify-between mb-2">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
@@ -160,7 +160,7 @@ export default function MedicalHistory({ exams = [], diagnoses = [], treatments 
           </div>
           <div className="grid grid-cols-2 gap-4">
             {images.map((image) => (
-              <div key={image.id} className="bg-purple-50 border border-purple-200 rounded-lg p-3">
+              <div key={image._id} className="bg-purple-50 border border-purple-200 rounded-lg p-3">
                 <div className="aspect-video bg-gray-200 rounded-lg mb-2 overflow-hidden">
                   <img
                     src={image.url}
