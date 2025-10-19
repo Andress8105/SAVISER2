@@ -1,5 +1,6 @@
-import { useState } from 'react';
-import { AlertCircle, Send, Stethoscope } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { AlertCircle, Send, Stethoscope, Search, CheckCircle } from 'lucide-react';
+import { searchPatient } from '../services/api';
 
 export interface EmergencyData {
   numero_identificacion: string;
@@ -65,6 +66,76 @@ export default function EmergencyRegistration({ onRegister, isLoading = false }:
   });
 
   const [assignedSpecialty, setAssignedSpecialty] = useState<{ specialty: string; doctor: string } | null>(null);
+  const [isSearching, setIsSearching] = useState(false);
+  const [patientFoundMessage, setPatientFoundMessage] = useState<string | null>(null);
+  const [searchTimeout, setSearchTimeout] = useState<NodeJS.Timeout | null>(null);
+
+  const calculateAge = (fechaNacimiento: string): number => {
+    const today = new Date();
+    const birthDate = new Date(fechaNacimiento);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age;
+  };
+
+  const autoFillPatientData = useCallback(async (numeroIdentificacion: string) => {
+    if (numeroIdentificacion.length < 5) {
+      setPatientFoundMessage(null);
+      return;
+    }
+
+    setIsSearching(true);
+    setPatientFoundMessage(null);
+
+    try {
+      const patient = await searchPatient(numeroIdentificacion);
+
+      if (patient) {
+        const edad = calculateAge(patient.fecha_nacimiento);
+
+        setFormData(prev => ({
+          ...prev,
+          nombres: patient.nombres,
+          apellidos: patient.apellidos,
+          edad: edad,
+          genero: patient.genero,
+          alergias_conocidas: patient.alergias || '',
+          medicamentos_actuales: patient.condiciones_medicas || '',
+        }));
+
+        setPatientFoundMessage(`Paciente encontrado: ${patient.nombres} ${patient.apellidos}`);
+      } else {
+        setPatientFoundMessage(null);
+      }
+    } catch (error) {
+      console.error('Error searching patient:', error);
+      setPatientFoundMessage(null);
+    } finally {
+      setIsSearching(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (searchTimeout) {
+      clearTimeout(searchTimeout);
+    }
+
+    if (formData.numero_identificacion.length >= 5) {
+      const timeout = setTimeout(() => {
+        autoFillPatientData(formData.numero_identificacion);
+      }, 800);
+      setSearchTimeout(timeout);
+    }
+
+    return () => {
+      if (searchTimeout) {
+        clearTimeout(searchTimeout);
+      }
+    };
+  }, [formData.numero_identificacion]);
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -127,20 +198,36 @@ export default function EmergencyRegistration({ onRegister, isLoading = false }:
 
       <form onSubmit={handleSubmit} className="space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div>
+          <div className="md:col-span-2 lg:col-span-3">
             <label className="block text-sm font-medium text-slate-700 mb-2">
               Número de Identificación *
             </label>
-            <input
-              type="text"
-              name="numero_identificacion"
-              value={formData.numero_identificacion}
-              onChange={handleChange}
-              required
-              className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
-              placeholder="Ej: 12345678"
-            />
+            <div className="relative">
+              <input
+                type="text"
+                name="numero_identificacion"
+                value={formData.numero_identificacion}
+                onChange={handleChange}
+                required
+                className="w-full px-4 py-2 pr-10 border border-slate-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 transition-colors"
+                placeholder="Ej: 12345678 (se auto-completará si existe)"
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                  <Search className="text-blue-500 animate-pulse" size={20} />
+                </div>
+              )}
+            </div>
+            {patientFoundMessage && (
+              <div className="mt-2 flex items-center gap-2 text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-2">
+                <CheckCircle size={18} />
+                <span className="text-sm font-medium">{patientFoundMessage}</span>
+              </div>
+            )}
           </div>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
 
           <div>
             <label className="block text-sm font-medium text-slate-700 mb-2">
