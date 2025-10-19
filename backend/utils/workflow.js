@@ -361,3 +361,5 @@ module.exports = {
   HospitalAutomaton,
   createAutomaton,
 };
+
+export { HospitalAutomaton, createAutomaton }

@@ -37,21 +37,15 @@ export function WorkflowPanel({ patient, onStateChange }: WorkflowPanelProps) {
     setError(null);
 
     try {
+      // Call the backend API to update workflow state
+      await updatePatientWorkflowState(patient.id, action);
+
+      // Update local automaton state
       const result = automaton.performAction(action);
-
-      if (!result.success) {
-        setError(result.error || 'Error al ejecutar la acción');
-        return;
-      }
-
-      // TODO: Implement API call to update workflow state in backend
-      // For now, we'll just update the local state
-      console.log(`Transitioning from ${patient.workflow_state} to ${toState} with action ${action}`);
-
       setAvailableActions(automaton.getAvailableActions());
 
       if (onStateChange) {
-        onStateChange();
+        onStateChange(result.newState || toState);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');

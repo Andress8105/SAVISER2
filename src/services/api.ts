@@ -311,6 +311,33 @@ export interface EmergencyResponse {
   };
 }
 
+export const updatePatientWorkflowState = async (
+  patientId: string,
+  action: string,
+  metadata?: Record<string, unknown>
+): Promise<PatientWithHistory> => {
+  try {
+    const response = await fetch(`${API_URL}/api/patients/${patientId}/workflow`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ action, metadata }),
+    });
+
+    if (!response.ok) {
+      const error = await response.json();
+      throw new Error(error.message || 'Error al actualizar el estado del flujo de trabajo');
+    }
+
+    const data = await response.json();
+    return data.patient;
+  } catch (error) {
+    console.error('Error updating workflow state:', error);
+    throw error;
+  }
+};
+
 export const registerEmergency = async (emergencyData: EmergencyData): Promise<EmergencyResponse> => {
   try {
     const response = await fetch(`${API_URL}/api/patients/emergency`, {
