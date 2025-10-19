@@ -275,3 +275,53 @@ export const deleteMedicalImage = async (imageId: string): Promise<void> => {
     throw new Error('Error al eliminar imagen');
   }
 };
+
+export interface EmergencyData {
+  numero_identificacion: string;
+  nombres: string;
+  apellidos: string;
+  edad: number;
+  genero: 'Masculino' | 'Femenino' | 'Otro';
+  sintomas: string;
+  nivel_urgencia: 'Baja' | 'Media' | 'Alta' | 'Crítica';
+  signos_vitales: {
+    presion_arterial: string;
+    frecuencia_cardiaca: string;
+    temperatura: string;
+    saturacion_oxigeno: string;
+  };
+  alergias_conocidas?: string;
+  medicamentos_actuales?: string;
+}
+
+export interface EmergencyResponse {
+  success: boolean;
+  patient: Patient;
+  emergencyRecord: any;
+  assignment: {
+    specialty: string;
+    doctor: string;
+  };
+}
+
+export const registerEmergency = async (emergencyData: EmergencyData): Promise<EmergencyResponse> => {
+  try {
+    const response = await fetch(`${API_URL}/api/patients/emergency`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(emergencyData),
+    });
+
+    if (!response.ok) {
+      throw new Error('Error al registrar urgencia');
+    }
+
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error registering emergency:', error);
+    throw new Error('Error al registrar urgencia');
+  }
+};

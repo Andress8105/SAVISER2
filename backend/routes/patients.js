@@ -8,6 +8,7 @@ import MedicalExam from '../models/MedicalExam.js';
 import Diagnosis from '../models/Diagnosis.js';
 import Treatment from '../models/Treatment.js';
 import MedicalImage from '../models/MedicalImage.js';
+import EmergencyRecord from '../models/EmergencyRecord.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -336,6 +337,111 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error fetching patients:', error);
     res.status(500).json({ message: 'Error al obtener pacientes' });
+  }
+});
+
+const SPECIALTIES = [
+  { symptoms: ['fiebre', 'tos', 'gripe', 'dolor de garganta', 'resfriado'], specialty: 'Medicina General', doctor: 'Dr. García' },
+  { symptoms: ['dolor de pecho', 'palpitaciones', 'presión alta', 'arritmia'], specialty: 'Cardiología', doctor: 'Dr. Martínez' },
+  { symptoms: ['fractura', 'esguince', 'dolor de huesos', 'trauma'], specialty: 'Traumatología', doctor: 'Dr. López' },
+  { symptoms: ['apendicitis', 'hernia', 'abdomen agudo'], specialty: 'Cirugía', doctor: 'Dr. Fernández' },
+  { symptoms: ['embarazo', 'parto', 'ginecológico'], specialty: 'Ginecología', doctor: 'Dra. Rodríguez' },
+  { symptoms: ['asma', 'neumonía', 'dificultad respiratoria'], specialty: 'Neumología', doctor: 'Dr. Sánchez' },
+];
+
+const determineSpecialty = (sintomas) => {
+  const sintomasLower = sintomas.toLowerCase();
+
+  for (const spec of SPECIALTIES) {
+    if (spec.symptoms.some(symptom => sintomasLower.includes(symptom))) {
+      return { specialty: spec.specialty, doctor: spec.doctor };
+    }
+  }
+
+  return { specialty: 'Medicina General', doctor: 'Dr. García' };
+};
+
+router.post('/emergency', async (req, res) => {
+  try {
+    const emergencyData = req.body;
+
+    let patient = await Patient.findOne({
+      numeroIdentificacion: emergencyData.numero_identificacion
+    });
+
+    if (!patient) {
+      patient = new Patient({
+        numeroIdentificacion: emergencyData.numero_identificacion,
+        nombres: emergencyData.nombres,
+        apellidos: emergencyData.apellidos,
+        fechaNacimiento: new Date(new Date().getFullYear() - emergencyData.edad, 0, 1),
+        genero: emergencyData.genero,
+        telefono: '',
+        direccion: '',
+        tipoSangre: 'O+',
+        alergias: emergencyData.alergias_conocidas || '',
+        condicionesMedicas: emergencyData.medicamentos_actuales || '',
+        contactoEmergencia: {
+          nombre: 'Por definir',
+          telefono: '',
+          relacion: 'Por definir'
+        }
+      });
+
+      await patient.save();
+    }
+
+    const assignment = determineSpecialty(emergencyData.sintomas);
+
+    const emergencyRecord = new EmergencyRecord({
+      patient_id: patient._id,
+      numero_identificacion: emergencyData.numero_identificacion,
+      nombres: emergencyData.nombres,
+      apellidos: emergencyData.apellidos,
+      edad: emergencyData.edad,
+      genero: emergencyData.genero,
+      sintomas: emergencyData.sintomas,
+      nivel_urgencia: emergencyData.nivel_urgencia,
+      signos_vitales: emergencyData.signos_vitales,
+      alergias_conocidas: emergencyData.alergias_conocidas,
+      medicamentos_actuales: emergencyData.medicamentos_actuales,
+      consultorio_asignado: assignment.specialty,
+      doctor_asignado: assignment.doctor
+    });
+
+    await emergencyRecord.save();
+
+    const diagnosis = new Diagnosis({
+      patient_id: patient._id,
+      fecha: new Date(),
+      diagnostico: `Registro de Urgencias - ${emergencyData.sintomas}`,
+      doctor: assignment.doctor,
+      notas: `Nivel de urgencia: ${emergencyData.nivel_urgencia}\nSignos vitales:\n- Presión arterial: ${emergencyData.signos_vitales.presion_arterial}\n- Frecuencia cardíaca: ${emergencyData.signos_vitales.frecuencia_cardiaca}\n- Temperatura: ${emergencyData.signos_vitales.temperatura}\n- Saturación O2: ${emergencyData.signos_vitales.saturacion_oxigeno}\n\nConsultorio asignado: ${assignment.specialty}`
+    });
+
+    await diagnosis.save();
+
+    res.status(201).json({
+      success: true,
+      patient: transformPatientFromDB(patient),
+      emergencyRecord,
+      assignment
+    });
+  } catch (error) {
+    console.error('Error registering emergency:', error);
+    res.status(500).json({ message: 'Error al registrar urgencia' });
+  }
+});
+
+router.get('/emergency/records', async (req, res) => {
+  try {
+    const records = await EmergencyRecord.find()
+      .sort({ fecha_ingreso: -1 })
+      .limit(50);
+    res.json(records);
+  } catch (error) {
+    console.error('Error fetching emergency records:', error);
+    res.status(500).json({ message: 'Error al obtener registros de urgencias' });
   }
 });
 

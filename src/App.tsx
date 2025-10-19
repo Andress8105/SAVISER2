@@ -3,8 +3,9 @@ import { Heart, CheckCircle, XCircle } from 'lucide-react';
 import PatientSearch from './components/PatientSearch';
 import PatientForm from './components/PatientForm';
 import PatientSheet from './components/PatientSheet';
-import type { PatientFormData, PatientWithHistory } from './services/api';
-import { searchPatient, createPatient } from './services/api';
+import EmergencyRegistration from './components/EmergencyRegistration';
+import type { PatientFormData, PatientWithHistory, EmergencyData } from './services/api';
+import { searchPatient, createPatient, registerEmergency } from './services/api';
 
 function App() {
   const [isLoading, setIsLoading] = useState(false);
@@ -67,6 +68,30 @@ function App() {
     }
   };
 
+  const handleEmergencyRegistration = async (emergencyData: EmergencyData) => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const response = await registerEmergency(emergencyData);
+      setMessage({
+        type: 'success',
+        text: `¡Paciente registrado en urgencias! Remitido a ${response.assignment.specialty} con ${response.assignment.doctor}`
+      });
+
+      const fullPatient = await searchPatient(response.patient.numero_identificacion);
+      if (fullPatient) {
+        setCurrentPatient(fullPatient);
+        setPatientFound(true);
+      }
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Error al registrar urgencia. Intente nuevamente.' });
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
       <header className="bg-white border-b border-slate-200 shadow-sm">
@@ -85,6 +110,15 @@ function App() {
 
       <main className="container mx-auto px-4 py-12">
         <div className="space-y-8">
+          <div className="mb-12">
+            <EmergencyRegistration
+              onRegister={handleEmergencyRegistration}
+              isLoading={isLoading}
+            />
+          </div>
+
+          <div className="border-t-4 border-blue-200 my-16"></div>
+
           <div className="text-center mb-12">
             <h2 className="text-2xl font-semibold text-slate-800 mb-2">
               Búsqueda de Pacientes
