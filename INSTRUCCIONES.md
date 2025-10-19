@@ -37,6 +37,43 @@ Esto iniciará el servidor de desarrollo de Vite.
 
 Todas las peticiones del front-end van exclusivamente al back-end en el puerto 3001, que se comunica con MongoDB Atlas.
 
+## Funcionalidades
+
+### Gestión de Pacientes
+- Búsqueda de pacientes por número de identificación
+- Registro de nuevos pacientes
+- Visualización de historia clínica completa
+
+### Historial Médico con Pestañas Organizadas
+El sistema incluye 4 pestañas para gestionar el historial médico:
+
+1. **Exámenes Médicos**
+   - Registro de exámenes con tipo, descripción y resultados
+   - Tipos: Sangre, Orina, Radiografía, Ecografía, Tomografía, etc.
+   - Asociación con doctor responsable
+
+2. **Diagnósticos**
+   - Registro de diagnósticos médicos
+   - Código CIE-10 para clasificación internacional
+   - Notas adicionales y doctor responsable
+
+3. **Tratamientos**
+   - Registro de tratamientos farmacológicos, fisioterapia, etc.
+   - Detalles de medicamento, dosis y frecuencia
+   - Estado activo/inactivo del tratamiento
+   - Fechas de inicio y fin
+
+4. **Imágenes Médicas**
+   - Carga de imágenes médicas (radiografías, tomografías, etc.)
+   - Visualización en galería
+   - Metadata con tipo, fecha y descripción
+
+### Automatización
+- Los formularios se abren desde cada pestaña
+- Actualización automática de datos al guardar
+- Validación de campos requeridos
+- Interfaz intuitiva con código de colores por tipo de registro
+
 ## Endpoints Disponibles
 
 - `GET /api/health` - Verificar estado del servidor
