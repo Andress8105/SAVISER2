@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Heart, CheckCircle, XCircle, LogOut } from 'lucide-react';
 import Login from './components/Login';
 import CompanyDashboard from './components/CompanyDashboard';
+import DoctorDashboard from './components/DoctorDashboard';
 import PatientSearch from './components/PatientSearch';
 import PatientForm from './components/PatientForm';
 import PatientSheet from './components/PatientSheet';
@@ -46,6 +47,10 @@ function App() {
 
   if (user.role === 'empresa') {
     return <CompanyDashboard user={user} onLogout={handleLogout} />;
+  }
+
+  if (user.role === 'consultorio') {
+    return <DoctorDashboard user={user} onLogout={handleLogout} />;
   }
 
   const handleSearch = async (numeroIdentificacion: string) => {
