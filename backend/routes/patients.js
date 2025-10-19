@@ -10,7 +10,7 @@ import Treatment from '../models/Treatment.js';
 import MedicalImage from '../models/MedicalImage.js';
 import EmergencyRecord from '../models/EmergencyRecord.js';
 import Doctor from '../models/Doctor.js';
-import { HospitalAutomaton, createAutomaton } from '../utils/workflow.js';
+import { WORKFLOW_TRANSITIONS, HospitalAutomaton, createAutomaton } from '../utils/workflow.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

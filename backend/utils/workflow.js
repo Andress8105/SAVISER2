@@ -356,10 +356,4 @@ function createAutomaton(currentState, history) {
   return automaton;
 }
 
-module.exports = {
-  WORKFLOW_TRANSITIONS,
-  HospitalAutomaton,
-  createAutomaton,
-};
-
-export { HospitalAutomaton, createAutomaton }
+export { WORKFLOW_TRANSITIONS, HospitalAutomaton, createAutomaton };
