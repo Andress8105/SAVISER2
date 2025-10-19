@@ -67,6 +67,31 @@ const patientSchema = new mongoose.Schema({
       type: String,
       required: true
     }
+  },
+  workflow_state: {
+    type: String,
+    default: 'INICIO'
+  },
+  workflow_history: {
+    type: [{
+      state: {
+        type: String,
+        required: true
+      },
+      timestamp: {
+        type: Date,
+        default: Date.now
+      },
+      action: {
+        type: String,
+        required: true
+      },
+      metadata: {
+        type: mongoose.Schema.Types.Mixed,
+        default: {}
+      }
+    }],
+    default: []
   }
 }, {
   timestamps: true

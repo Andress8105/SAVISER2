@@ -10,6 +10,7 @@ import Treatment from '../models/Treatment.js';
 import MedicalImage from '../models/MedicalImage.js';
 import EmergencyRecord from '../models/EmergencyRecord.js';
 import Doctor from '../models/Doctor.js';
+import { HospitalAutomaton, createAutomaton } from '../utils/workflow.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -48,7 +49,9 @@ const transformPatientData = (data) => {
     condiciones_medicas: data.condicionesMedicas || data.condiciones_medicas,
     contacto_emergencia_nombre: data.contactoEmergencia?.nombre || data.contacto_emergencia_nombre,
     contacto_emergencia_telefono: data.contactoEmergencia?.telefono || data.contacto_emergencia_telefono,
-    contacto_emergencia_relacion: data.contactoEmergencia?.relacion || data.contacto_emergencia_relacion
+    contacto_emergencia_relacion: data.contactoEmergencia?.relacion || data.contacto_emergencia_relacion,
+    workflow_state: data.workflow_state || 'INICIO',
+    workflow_history: data.workflow_history || []
   };
 };
 
@@ -69,6 +72,8 @@ const transformPatientFromDB = (patient) => {
     contacto_emergencia_nombre: patient.contactoEmergencia?.nombre,
     contacto_emergencia_telefono: patient.contactoEmergencia?.telefono,
     contacto_emergencia_relacion: patient.contactoEmergencia?.relacion,
+    workflow_state: patient.workflow_state,
+    workflow_history: patient.workflow_history,
     createdAt: patient.createdAt,
     updatedAt: patient.updatedAt
   };
@@ -527,6 +532,74 @@ router.get('/stats', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Error al obtener estadísticas'
+    });
+  }
+});
+
+router.post('/:id/workflow', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { action, metadata = {} } = req.body;
+
+    if (!action) {
+      return res.status(400).json({
+        success: false,
+        message: 'La acción es requerida'
+      });
+    }
+
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: 'Paciente no encontrado'
+      });
+    }
+
+    // Create automaton with current patient state
+    const automaton = createAutomaton(patient.workflow_state, patient.workflow_history);
+
+    // Attempt to perform the action
+    const result = automaton.performAction(action, metadata);
+
+    if (!result.success) {
+      return res.status(400).json({
+        success: false,
+        message: result.error
+      });
+    }
+
+    // Update patient with new workflow state and history
+    patient.workflow_state = result.newState;
+    patient.workflow_history = automaton.getHistory();
+
+    await patient.save();
+
+    // Return updated patient data
+    const [exams, diagnoses, treatments, images] = await Promise.all([
+      MedicalExam.find({ patient_id: patient._id }).sort({ fecha: -1 }),
+      Diagnosis.find({ patient_id: patient._id }).sort({ fecha: -1 }),
+      Treatment.find({ patient_id: patient._id }).sort({ fecha_inicio: -1 }),
+      MedicalImage.find({ patient_id: patient._id }).sort({ fecha: -1 })
+    ]);
+
+    const transformedPatient = transformPatientFromDB(patient);
+
+    res.json({
+      success: true,
+      patient: {
+        ...transformedPatient,
+        exams,
+        diagnoses,
+        treatments,
+        images
+      }
+    });
+  } catch (error) {
+    console.error('Error updating workflow state:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al actualizar el estado del flujo de trabajo'
     });
   }
 });

@@ -91,8 +91,8 @@ export interface PatientWithHistory extends Patient {
   diagnoses?: Diagnosis[];
   treatments?: Treatment[];
   images?: MedicalImage[];
-  workflow_state?: string;
-  workflow_history?: Array<{
+  workflow_state: string;
+  workflow_history: Array<{
     state: string;
     timestamp: string;
     action: string;
