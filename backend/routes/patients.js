@@ -445,4 +445,52 @@ router.get('/emergency/records', async (req, res) => {
   }
 });
 
+router.get('/stats', async (req, res) => {
+  try {
+    const totalPatients = await Patient.countDocuments();
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+
+    const patientsToday = await Patient.countDocuments({
+      createdAt: { $gte: today, $lt: tomorrow }
+    });
+
+    const patientsGrouped = await Patient.aggregate([
+      {
+        $group: {
+          _id: {
+            $dateToString: { format: "%Y-%m-%d", date: "$createdAt" }
+          },
+          count: { $sum: 1 }
+        }
+      },
+      { $sort: { _id: -1 } },
+      { $limit: 30 }
+    ]);
+
+    const byDate = patientsGrouped.map(item => ({
+      date: item._id,
+      count: item.count
+    }));
+
+    res.json({
+      success: true,
+      stats: {
+        total: totalPatients,
+        today: patientsToday,
+        byDate
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error al obtener estadísticas'
+    });
+  }
+});
+
 export default router;

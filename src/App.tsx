@@ -1,5 +1,7 @@
-import { useState } from 'react';
-import { Heart, CheckCircle, XCircle } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Heart, CheckCircle, XCircle, LogOut } from 'lucide-react';
+import Login from './components/Login';
+import CompanyDashboard from './components/CompanyDashboard';
 import PatientSearch from './components/PatientSearch';
 import PatientForm from './components/PatientForm';
 import PatientSheet from './components/PatientSheet';
@@ -7,11 +9,44 @@ import EmergencyRegistration from './components/EmergencyRegistration';
 import type { PatientFormData, PatientWithHistory, EmergencyData } from './services/api';
 import { searchPatient, createPatient, registerEmergency } from './services/api';
 
+interface User {
+  id: string;
+  username: string;
+  nombre: string;
+  role: string;
+}
+
 function App() {
+  const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [patientFound, setPatientFound] = useState<boolean | null>(null);
   const [currentPatient, setCurrentPatient] = useState<PatientWithHistory | null>(null);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    const storedUser = localStorage.getItem('saviser_user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
+
+  const handleLogin = (userData: User) => {
+    setUser(userData);
+    localStorage.setItem('saviser_user', JSON.stringify(userData));
+  };
+
+  const handleLogout = () => {
+    setUser(null);
+    localStorage.removeItem('saviser_user');
+  };
+
+  if (!user) {
+    return <Login onLogin={handleLogin} />;
+  }
+
+  if (user.role === 'empresa') {
+    return <CompanyDashboard user={user} onLogout={handleLogout} />;
+  }
 
   const handleSearch = async (numeroIdentificacion: string) => {
     setIsLoading(true);
@@ -96,13 +131,28 @@ function App() {
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-slate-50">
       <header className="bg-white border-b border-slate-200 shadow-sm">
         <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-600 rounded-lg">
-              <Heart className="text-white" size={32} />
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2 bg-blue-600 rounded-lg">
+                <Heart className="text-white" size={32} />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold text-slate-800">SAVISER</h1>
+                <p className="text-sm text-slate-600">Sistema de Atención y Vida al Ser Humano</p>
+              </div>
             </div>
-            <div>
-              <h1 className="text-3xl font-bold text-slate-800">SAVISER</h1>
-              <p className="text-sm text-slate-600">Sistema de Atención y Vida al Ser Humano</p>
+            <div className="flex items-center gap-4">
+              <div className="text-right">
+                <p className="text-sm font-medium text-slate-800">{user.nombre}</p>
+                <p className="text-xs text-slate-600 capitalize">{user.role}</p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="flex items-center gap-2 px-4 py-2 bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition"
+              >
+                <LogOut size={18} />
+                <span>Salir</span>
+              </button>
             </div>
           </div>
         </div>
