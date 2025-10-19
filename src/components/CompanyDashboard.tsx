@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Heart, Users, Calendar, TrendingUp, Activity, LogOut } from 'lucide-react';
+import { Heart, Users, Calendar, TrendingUp, Activity, LogOut, UserCog } from 'lucide-react';
+import UserManagement from './UserManagement';
 
 interface User {
   id: string;
@@ -23,6 +24,7 @@ interface PatientStats {
 }
 
 export default function CompanyDashboard({ user, onLogout }: CompanyDashboardProps) {
+  const [activeTab, setActiveTab] = useState<'stats' | 'users'>('stats');
   const [stats, setStats] = useState<PatientStats>({
     total: 0,
     today: 0,
@@ -79,7 +81,34 @@ export default function CompanyDashboard({ user, onLogout }: CompanyDashboardPro
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        {isLoading ? (
+        <div className="mb-6 flex gap-4 border-b border-slate-200">
+          <button
+            onClick={() => setActiveTab('stats')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition ${
+              activeTab === 'stats'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <TrendingUp size={20} />
+            <span>Estadísticas</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('users')}
+            className={`flex items-center gap-2 px-4 py-3 font-semibold transition ${
+              activeTab === 'users'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <UserCog size={20} />
+            <span>Gestión de Usuarios</span>
+          </button>
+        </div>
+
+        {activeTab === 'users' ? (
+          <UserManagement adminId={user.id} companyId={user.id} />
+        ) : isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
