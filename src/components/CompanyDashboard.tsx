@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
-import { Heart, Users, Calendar, TrendingUp, Activity, LogOut, UserCog } from 'lucide-react';
+import { Heart, Users, Calendar, TrendingUp, Activity, LogOut, UserCog, Package, Receipt, Stethoscope } from 'lucide-react';
 import UserManagement from './UserManagement';
+import AppointmentManagement from './AppointmentManagement';
+import InventoryManagement from './InventoryManagement';
+import BillingManagement from './BillingManagement';
 
 interface User {
   id: string;
@@ -24,7 +27,7 @@ interface PatientStats {
 }
 
 export default function CompanyDashboard({ user, onLogout }: CompanyDashboardProps) {
-  const [activeTab, setActiveTab] = useState<'stats' | 'users'>('stats');
+  const [activeTab, setActiveTab] = useState<'stats' | 'users' | 'appointments' | 'inventory' | 'billing'>('stats');
   const [stats, setStats] = useState<PatientStats>({
     total: 0,
     today: 0,
@@ -81,10 +84,10 @@ export default function CompanyDashboard({ user, onLogout }: CompanyDashboardPro
       </header>
 
       <main className="container mx-auto px-4 py-8">
-        <div className="mb-6 flex gap-4 border-b border-slate-200">
+        <div className="mb-6 flex gap-2 border-b border-slate-200 overflow-x-auto">
           <button
             onClick={() => setActiveTab('stats')}
-            className={`flex items-center gap-2 px-4 py-3 font-semibold transition ${
+            className={`flex items-center gap-2 px-3 py-3 font-semibold transition whitespace-nowrap ${
               activeTab === 'stats'
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-slate-600 hover:text-slate-800'
@@ -95,7 +98,7 @@ export default function CompanyDashboard({ user, onLogout }: CompanyDashboardPro
           </button>
           <button
             onClick={() => setActiveTab('users')}
-            className={`flex items-center gap-2 px-4 py-3 font-semibold transition ${
+            className={`flex items-center gap-2 px-3 py-3 font-semibold transition whitespace-nowrap ${
               activeTab === 'users'
                 ? 'text-blue-600 border-b-2 border-blue-600'
                 : 'text-slate-600 hover:text-slate-800'
@@ -104,11 +107,58 @@ export default function CompanyDashboard({ user, onLogout }: CompanyDashboardPro
             <UserCog size={20} />
             <span>Gestión de Usuarios</span>
           </button>
+          <button
+            onClick={() => setActiveTab('appointments')}
+            className={`flex items-center gap-2 px-3 py-3 font-semibold transition whitespace-nowrap ${
+              activeTab === 'appointments'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <Calendar size={20} />
+            <span>Citas</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('inventory')}
+            className={`flex items-center gap-2 px-3 py-3 font-semibold transition whitespace-nowrap ${
+              activeTab === 'inventory'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <Package size={20} />
+            <span>Inventario</span>
+          </button>
+          <button
+            onClick={() => setActiveTab('billing')}
+            className={`flex items-center gap-2 px-3 py-3 font-semibold transition whitespace-nowrap ${
+              activeTab === 'billing'
+                ? 'text-blue-600 border-b-2 border-blue-600'
+                : 'text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <Receipt size={20} />
+            <span>Facturación</span>
+          </button>
         </div>
 
-        {activeTab === 'users' ? (
+        {activeTab === 'users' && (
           <UserManagement adminId={user.id} companyId={user.id} />
-        ) : isLoading ? (
+        )}
+        
+        {activeTab === 'appointments' && (
+          <AppointmentManagement companyId={user.id} />
+        )}
+        
+        {activeTab === 'inventory' && (
+          <InventoryManagement companyId={user.id} />
+        )}
+        
+        {activeTab === 'billing' && (
+          <BillingManagement companyId={user.id} />
+        )}
+        
+        {activeTab === 'stats' && (isLoading ? (
           <div className="flex justify-center items-center h-64">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
           </div>
@@ -215,7 +265,7 @@ export default function CompanyDashboard({ user, onLogout }: CompanyDashboardPro
               </div>
             </div>
           </div>
-        )}
+        ))}
       </main>
     </div>
   );

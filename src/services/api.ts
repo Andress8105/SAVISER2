@@ -100,6 +100,31 @@ export interface PatientWithHistory extends Patient {
   }>;
 }
 
+export interface Appointment {
+  _id: string;
+  patient_id: {
+    _id: string;
+    nombres: string;
+    apellidos: string;
+    numero_identificacion: string;
+    telefono: string;
+  };
+  doctor_id: {
+    _id: string;
+    nombre: string;
+    apellidos: string;
+    especialidad: string;
+  };
+  fecha_cita: string;
+  hora_inicio: string;
+  hora_fin: string;
+  tipo_cita: string;
+  estado: string;
+  motivo: string;
+  notas: string;
+  consultorio: number;
+}
+
 export const searchPatient = async (numeroIdentificacion: string): Promise<PatientWithHistory | null> => {
   try {
     const response = await fetch(`${API_URL}/api/patients/search/${numeroIdentificacion}`);
