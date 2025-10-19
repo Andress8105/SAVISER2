@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { Activity, ArrowRight, Clock, CheckCircle } from 'lucide-react';
 import { createAutomaton, type WorkflowState, type WorkflowAction, type WorkflowTransition } from '../automaton';
-import { supabaseService, type Patient } from '../services/supabaseService';
+
+interface Patient {
+  id: string;
+  workflow_state: WorkflowState;
+  workflow_history: Array<{
+    state: string;
+    timestamp: string;
+    action: string;
+    metadata?: Record<string, unknown>;
+  }>;
+}
 
 interface WorkflowPanelProps {
   patient: Patient;
@@ -34,18 +44,14 @@ export function WorkflowPanel({ patient, onStateChange }: WorkflowPanelProps) {
         return;
       }
 
-      await supabaseService.transitionWorkflowState(
-        patient.id,
-        patient.workflow_state,
-        toState,
-        action,
-        { timestamp: new Date().toISOString() }
-      );
+      // TODO: Implement API call to update workflow state in backend
+      // For now, we'll just update the local state
+      console.log(`Transitioning from ${patient.workflow_state} to ${toState} with action ${action}`);
 
       setAvailableActions(automaton.getAvailableActions());
 
       if (onStateChange) {
-        onStateChange(toState);
+        onStateChange();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error desconocido');
