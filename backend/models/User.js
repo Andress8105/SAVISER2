@@ -20,6 +20,19 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  companyId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Company',
+    required: function() {
+      return this.role !== 'empleado';
+    }
+  },
+  consultorio: {
+    type: Number,
+    required: function() {
+      return this.role === 'consultorio';
+    }
+  },
   activo: {
     type: Boolean,
     default: true

@@ -45,10 +45,15 @@ const emergencyRecordSchema = new mongoose.Schema({
   alergias_conocidas: String,
   medicamentos_actuales: String,
   consultorio_asignado: {
-    type: String,
+    type: Number,
     required: true
   },
   doctor_asignado: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Doctor',
+    required: true
+  },
+  doctor_nombre: {
     type: String,
     required: true
   },

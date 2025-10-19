@@ -108,10 +108,20 @@ function App() {
     setMessage(null);
 
     try {
-      const response = await registerEmergency(emergencyData);
+      const dataToSend = {
+        ...emergencyData,
+        companyId: user.id
+      };
+
+      const response = await registerEmergency(dataToSend);
+
+      const consultorioDisplay = typeof response.assignment.consultorio === 'number'
+        ? `Consultorio ${response.assignment.consultorio}`
+        : response.assignment.specialty;
+
       setMessage({
         type: 'success',
-        text: `¡Paciente registrado en urgencias! Remitido a ${response.assignment.specialty} con ${response.assignment.doctor}`
+        text: `¡Paciente registrado en urgencias! Remitido a ${consultorioDisplay} con ${response.assignment.doctor}`
       });
 
       const fullPatient = await searchPatient(response.patient.numero_identificacion);

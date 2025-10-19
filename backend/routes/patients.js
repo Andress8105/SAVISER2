@@ -9,6 +9,7 @@ import Diagnosis from '../models/Diagnosis.js';
 import Treatment from '../models/Treatment.js';
 import MedicalImage from '../models/MedicalImage.js';
 import EmergencyRecord from '../models/EmergencyRecord.js';
+import Doctor from '../models/Doctor.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -364,6 +365,7 @@ const determineSpecialty = (sintomas) => {
 router.post('/emergency', async (req, res) => {
   try {
     const emergencyData = req.body;
+    const { companyId } = emergencyData;
 
     let patient = await Patient.findOne({
       numeroIdentificacion: emergencyData.numero_identificacion
@@ -391,7 +393,38 @@ router.post('/emergency', async (req, res) => {
       await patient.save();
     }
 
-    const assignment = determineSpecialty(emergencyData.sintomas);
+    const priorityMap = {
+      'Baja': 'baja',
+      'Media': 'media',
+      'Alta': 'alta',
+      'Crítica': 'critica'
+    };
+
+    const normalizedPriority = priorityMap[emergencyData.nivel_urgencia];
+
+    let assignedDoctor = null;
+    let consultorio = 'Consultorio General';
+    let doctorName = 'Doctor Asignado';
+
+    if (companyId) {
+      const availableDoctors = await Doctor.find({
+        companyId,
+        activo: true,
+        prioridadesAsignadas: normalizedPriority
+      });
+
+      if (availableDoctors.length > 0) {
+        assignedDoctor = availableDoctors[Math.floor(Math.random() * availableDoctors.length)];
+        consultorio = assignedDoctor.consultorio;
+        doctorName = `${assignedDoctor.nombre} ${assignedDoctor.apellidos}`;
+      }
+    }
+
+    if (!assignedDoctor) {
+      const assignment = determineSpecialty(emergencyData.sintomas);
+      consultorio = assignment.specialty;
+      doctorName = assignment.doctor;
+    }
 
     const emergencyRecord = new EmergencyRecord({
       patient_id: patient._id,
@@ -405,8 +438,9 @@ router.post('/emergency', async (req, res) => {
       signos_vitales: emergencyData.signos_vitales,
       alergias_conocidas: emergencyData.alergias_conocidas,
       medicamentos_actuales: emergencyData.medicamentos_actuales,
-      consultorio_asignado: assignment.specialty,
-      doctor_asignado: assignment.doctor
+      consultorio_asignado: typeof consultorio === 'number' ? consultorio : 1,
+      doctor_asignado: assignedDoctor ? assignedDoctor._id : patient._id,
+      doctor_nombre: doctorName
     });
 
     await emergencyRecord.save();
@@ -415,8 +449,8 @@ router.post('/emergency', async (req, res) => {
       patient_id: patient._id,
       fecha: new Date(),
       diagnostico: `Registro de Urgencias - ${emergencyData.sintomas}`,
-      doctor: assignment.doctor,
-      notas: `Nivel de urgencia: ${emergencyData.nivel_urgencia}\nSignos vitales:\n- Presión arterial: ${emergencyData.signos_vitales.presion_arterial}\n- Frecuencia cardíaca: ${emergencyData.signos_vitales.frecuencia_cardiaca}\n- Temperatura: ${emergencyData.signos_vitales.temperatura}\n- Saturación O2: ${emergencyData.signos_vitales.saturacion_oxigeno}\n\nConsultorio asignado: ${assignment.specialty}`
+      doctor: doctorName,
+      notas: `Nivel de urgencia: ${emergencyData.nivel_urgencia}\nSignos vitales:\n- Presión arterial: ${emergencyData.signos_vitales.presion_arterial}\n- Frecuencia cardíaca: ${emergencyData.signos_vitales.frecuencia_cardiaca}\n- Temperatura: ${emergencyData.signos_vitales.temperatura}\n- Saturación O2: ${emergencyData.signos_vitales.saturacion_oxigeno}\n\nConsultorio asignado: ${consultorio}`
     });
 
     await diagnosis.save();
@@ -425,7 +459,11 @@ router.post('/emergency', async (req, res) => {
       success: true,
       patient: transformPatientFromDB(patient),
       emergencyRecord,
-      assignment
+      assignment: {
+        specialty: typeof consultorio === 'number' ? `Consultorio ${consultorio}` : consultorio,
+        doctor: doctorName,
+        consultorio: consultorio
+      }
     });
   } catch (error) {
     console.error('Error registering emergency:', error);
